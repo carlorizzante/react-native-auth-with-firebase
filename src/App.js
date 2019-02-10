@@ -10,8 +10,9 @@
 import React, { Component } from 'react'
 import firebase from 'firebase'
 import LoginForm from './components/LoginForm'
-import { View } from 'react-native'
-import { Header } from './components/common'
+import LogoutView from './components/LogoutView'
+import { Text, View } from 'react-native'
+import { Header, Spinner } from './components/common'
 
 const styles = {
   root: {
@@ -36,11 +37,7 @@ const styles = {
 
 class App extends Component {
   state = {
-    auth: {
-      username: null,
-      password: null,
-      authenticated: false
-    }
+    uid: null
   }
 
   componentDidMount() {
@@ -53,15 +50,29 @@ class App extends Component {
       messagingSenderId: '333996719070'
     }
     firebase.initializeApp(config)
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) setTimeout(() => this.setState({ uid: user.uid }), 2000)
+      else this.setState({ uid: false })
+    })
   }
 
-  handleSubmit = () => console.log('Submit!')
+  renderAuth = () => {
+    switch(this.state.uid) {
+      case null:
+        return <Spinner size='large' />
+      case false:
+        return <LoginForm />
+      default:
+        return <LogoutView />
+    }
+  }
 
   render() {
+    const { uid } = this.state
     return (
       <View style={styles.root}>
         <Header>Auth demo</Header>
-        <LoginForm />
+        {this.renderAuth()}
       </View>
     );
   }
