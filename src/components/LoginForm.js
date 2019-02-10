@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import firebase from 'firebase'
 import { Text } from 'react-native'
-import { Button, Card, CardSection, Input } from './common'
+import { Button, Card, CardSection, Input, Spinner } from './common'
 
 const styles = {
   root: {},
@@ -23,6 +23,7 @@ class LoginForm extends Component {
   state = {
     email: '',
     password: '',
+    loading: false,
     error: '',
     message: '',
     buttonText: '',
@@ -44,25 +45,33 @@ class LoginForm extends Component {
   handleSubmit = () => {
     const { email, password } = this.state;
     const { buttonTextActive, buttonTextDisabled } = this.state;
-    this.setState({ error: '', message: '', buttonText: buttonTextDisabled })
+    this.setState({
+      loading: true,
+      error: '',
+      message: '',
+      buttonText: buttonTextDisabled
+    })
     firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(res => this.setState({ message: 'User authenticated.'}))
+      .then(res => this.setState({ message: 'User authenticated.' }))
       .catch(() => firebase.auth().createUserWithEmailAndPassword(email, password)
         .then(res => this.setState({ message: 'User successfully created!' }))
         .catch(error => this.setState({ error: error.message }))
       )
-      .finally(() => this.setState({ buttonText: buttonTextActive }))
+      .finally(() => this.setState({
+        loading: false,
+        buttonText: buttonTextActive
+      }))
   }
 
   render() {
-    console.log("LoginForm");
+    const { buttonText, email, error, loading, message, password } = this.state
     return (
       <Card>
         <CardSection>
           <Input
             label='Email'
             onChangeText={email => this.setState({ email })}
-            value={this.state.email}
+            value={email}
             placeholder="user@email.com"
           />
         </CardSection>
@@ -70,7 +79,7 @@ class LoginForm extends Component {
           <Input
             label='Password'
             onChangeText={password => this.setState({ password })}
-            value={this.state.password}
+            value={password}
             placeholder="your password"
             secureTextEntry
           />
@@ -78,7 +87,7 @@ class LoginForm extends Component {
 
         <CardSection>
           <Button onPress={this.handleSubmit}>
-            {this.state.buttonText}
+            {buttonText}
           </Button>
         </CardSection>
 
@@ -86,12 +95,14 @@ class LoginForm extends Component {
           <Text>You can create a new account provinding a new email and password.</Text>
         </CardSection>
 
+        {loading && <Spinner size='large' />}
+
         {
-          this.state.message || this.state.error
+          message || error
           ? (
             <CardSection style={styles.content}>
-              <Text style={styles.content__error}>{this.state.error}</Text>
-              <Text style={styles.content__success}>{this.state.message}</Text>
+              <Text style={styles.content__error}>{error}</Text>
+              <Text style={styles.content__success}>{message}</Text>
             </CardSection>
           )
           : null
